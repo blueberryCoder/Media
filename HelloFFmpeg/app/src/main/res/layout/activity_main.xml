@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.blueberry.helloffmpeg.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_config"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FFmpeg类库的配置信息"
+            />
+
+        <Button
+            android:id="@+id/btn_protocol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FFmpeg类库支持的协议"
+            />
+
+        <Button
+            android:id="@+id/btn_avcodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FFmpeg类库支持的编码器"
+            />
+
+        <Button
+            android:id="@+id/btn_avfilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FFmpeg类库支持的滤镜"
+            />
+
+        <Button
+            android:id="@+id/btn_avformat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FFmpeg类库支持的封装格式"
+            />
+
+
+        <TextView
+            android:id="@+id/tv_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+    </LinearLayout>
+
+</ScrollView>
