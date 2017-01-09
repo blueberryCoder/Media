@@ -24,11 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
@@ -170,12 +166,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     };
 
     private void fetchAudioFromDevice() {
-        OutputStream os =null;
-        try {
-             os = new FileOutputStream(new File("/sdcard/out.pcm"));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
         Log.d(TAG, "录音线程开始");
         while (aloop && mAudioRecord != null && !Thread.interrupted()) {
             int size = mAudioRecord.read(abuffer, 0, abuffer.length);
@@ -186,12 +176,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             if (aloop) {
                 byte[] audio = new byte[size];
                 System.arraycopy(abuffer, 0, audio, 0, size);
-                try {
-                    os.write(audio);
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 onGetPcmFrame(audio);
             }
         }
@@ -216,7 +200,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 Log.e(TAG, "initialized the mic failed");
                 continue;
             }
-
             aSampleRate = sampleRate;
             abits = audioForamt;
             aChannelCount = channelConfig == AudioFormat.CHANNEL_CONFIGURATION_STEREO ? 2 : 1;
@@ -482,7 +465,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 if (isStarted) {
                     if (data != null) {
                         // data 是Nv21
-
                         if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
                             Yuv420Util.Nv21ToYuv420SP(data, dstByte, previewSize.width, previewSize.height);
                         } else if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
