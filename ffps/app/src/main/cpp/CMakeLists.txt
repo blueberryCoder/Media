@@ -10,7 +10,8 @@ include_directories(${ffmpeg_dir}/include)
 
 
 add_library(ffps SHARED
-            native-lib.cpp
+            publish.h
+            publish.cpp
             )
 
 find_library(log-lib log )
@@ -25,3 +26,4 @@ target_link_libraries(ffps
                        ${log-lib}
                        ffmpeg
                        )
+

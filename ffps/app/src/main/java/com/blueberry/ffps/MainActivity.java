@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.List;
 
 import static android.hardware.Camera.CameraInfo.CAMERA_FACING_BACK;
@@ -69,10 +70,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private void start() {
         isStarted = true;
         // init
+        Publisher.init("rtmp://192.168.155.1:1935/live/test",previewSize.width,previewSize.height);
+        Log.d(TAG,"初始化完成");
     }
 
     private void stop() {
         isStarted = false;
+        Publisher.stop();
+        Log.d(TAG,"停止");
     }
 
     public void initCamera() {
@@ -88,7 +93,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         setParameters();
 
         setCameraDisplayOrientation(MainActivity.this, CAMERA_FACING_BACK, mCamera);
-
+        try {
+            mCamera.setPreviewDisplay(mSurfaceHolder);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         mCamera.addCallbackBuffer(new byte[getPreviewByteSize(ImageFormat.NV21)]);
         mCamera.setPreviewCallbackWithBuffer(getPreviewByteCallBack());
         mCamera.startPreview();
@@ -202,7 +211,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         return new Camera.PreviewCallback() {
             @Override
             public void onPreviewFrame(byte[] data, Camera camera) {
+                if(isStarted){
+                    Publisher.push(data,previewSize.width,previewSize.height);
 
+                }
+
+                if(data!=null){
+                    camera.addCallbackBuffer(data);
+                }else{
+                    camera.addCallbackBuffer(new byte[getPreviewByteSize(ImageFormat.NV21)]);
+                }
             }
         };
     }
