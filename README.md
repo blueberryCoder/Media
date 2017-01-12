@@ -25,3 +25,7 @@
     + 使用libx264进行视频编码
 - ffps
     + 使用ffmpeg将摄像头采集的数据使用rtmp发出
+- librtmp
+    + librtmp源码以及移植好的librtmp.so 和所以依赖的polarssl源码
+- HelloRtmp
+    + 测试librtmp
