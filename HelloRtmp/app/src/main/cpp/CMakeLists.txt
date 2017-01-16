@@ -9,7 +9,7 @@ include_directories(${rtmp_dir}/include/librtmp)
 add_library(
              hellortmp
              SHARED
-            native-lib.c
+           publish.c
              )
 
 
