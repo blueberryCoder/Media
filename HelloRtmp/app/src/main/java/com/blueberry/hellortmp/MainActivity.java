@@ -25,9 +25,6 @@ import java.util.List;
 import static android.hardware.Camera.Parameters.FOCUS_MODE_AUTO;
 import static android.hardware.Camera.Parameters.PREVIEW_FPS_MAX_INDEX;
 import static android.hardware.Camera.Parameters.PREVIEW_FPS_MIN_INDEX;
-import static android.media.MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
-import static android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-import static android.media.MediaCodec.BUFFER_FLAG_KEY_FRAME;
 import static android.media.MediaCodec.CONFIGURE_FLAG_ENCODE;
 import static android.media.MediaFormat.KEY_BIT_RATE;
 import static android.media.MediaFormat.KEY_COLOR_FORMAT;
@@ -39,6 +36,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     static {
         System.loadLibrary("hellortmp");
     }
+
+    static final int NAL_SLICE = 1;
+    static final int NAL_SLICE_DPA = 2;
+    static final int NAL_SLICE_DPB = 3;
+    static final int NAL_SLICE_DPC = 4;
+    static final int NAL_SLICE_IDR = 5;
+    static final int NAL_SEI = 6;
+    static final int NAL_SPS = 7;
+    static final int NAL_PPS = 8;
+    static final int NAL_AUD = 9;
+    static final int NAL_FILLER = 12;
+
 
     private static final String VCODEC_MIME = "video/avc";
 
@@ -85,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         initVideoEncoder();
         presentationTimeUs = new Date().getTime() * 1000;
 
-        Rtmp.init("rtmp://192.168.155.1:1935/live/test",5);
+        Rtmp.init("rtmp://192.168.155.1:1935/live/test", 5);
     }
 
     private MediaCodec vencoder;
@@ -357,28 +366,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     private void onEncodedh264Frame(ByteBuffer bb, MediaCodec.BufferInfo vBufferInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("BufferInfo：\n")
-                .append("offset=" + vBufferInfo.offset)
-                .append(",size=" + vBufferInfo.size)
-                .append(",presentationTimeUs=" + vBufferInfo.presentationTimeUs);
-        switch (vBufferInfo.flags) {
-            case BUFFER_FLAG_KEY_FRAME:
-                sb.append(",flag=BUFFER_FLAG_KEY_FRAME");
-                break;
-            case BUFFER_FLAG_CODEC_CONFIG:
-                sb.append(",flag=BUFFER_FLAG_CODEC_CONFIG");
-                break;
-            case BUFFER_FLAG_END_OF_STREAM:
-                sb.append(",flag=BUFFER_FLAG_END_OF_STREAM");
-                break;
-            default:
-                sb.append(",flag=" + vBufferInfo.flags);
-                break;
-        }
-        Log.d(TAG, sb.toString());
-
-
         int offset = 4;
         //判断帧的类型
         if (bb.get(2) == 0x01) {
@@ -414,14 +401,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 // PPS为后4个字节
                 //so .
                 byte[] pps = new byte[4];
-                byte[] sps = new byte[vBufferInfo.size-12];
+                byte[] sps = new byte[vBufferInfo.size - 12];
                 bb.getInt();// 抛弃 0,0,0,1
-                bb.get(sps,0,sps.length);
+                bb.get(sps, 0, sps.length);
                 bb.getInt();
-                bb.get(pps,0,pps.length);
-                Log.d(TAG,"解析得到 sps:"+Arrays.toString(sps)+",PPS="+Arrays.toString(pps));
+                bb.get(pps, 0, pps.length);
+                Log.d(TAG, "解析得到 sps:" + Arrays.toString(sps) + ",PPS=" + Arrays.toString(pps));
 
-                Rtmp.sendSpsAndPps(sps,sps.length,pps,pps.length,vBufferInfo.presentationTimeUs/1000);
+                Rtmp.sendSpsAndPps(sps, sps.length, pps, pps.length, vBufferInfo.presentationTimeUs / 1000);
                 return;
             case NAL_PPS: // pps
                 Log.d(TAG, "type=NAL_PPS");
@@ -435,20 +422,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
         byte[] bytes = new byte[vBufferInfo.size];
         bb.get(bytes);
-        Rtmp.sendVideoFrame(bytes,bytes.length,vBufferInfo.presentationTimeUs/1000);
+        Rtmp.sendVideoFrame(bytes, bytes.length, vBufferInfo.presentationTimeUs / 1000);
 
     }
-
-    static final int NAL_SLICE = 1;
-    static final int NAL_SLICE_DPA = 2;
-    static final int NAL_SLICE_DPB = 3;
-    static final int NAL_SLICE_DPC = 4;
-    static final int NAL_SLICE_IDR = 5;
-    static final int NAL_SEI = 6;
-    static final int NAL_SPS = 7;
-    static final int NAL_PPS = 8;
-    static final int NAL_AUD = 9;
-    static final int NAL_FILLER = 12;
 
     private int calculateFrameSize(int format) {
         return previewSize.width * previewSize.height * ImageFormat.getBitsPerPixel(format) / 8;
