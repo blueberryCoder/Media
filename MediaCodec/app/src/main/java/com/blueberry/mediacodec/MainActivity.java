@@ -24,6 +24,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -85,6 +88,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private boolean aloop;
     private Thread audioWorkThread;
 
+    private FileOutputStream avcFos = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void codecToggle() {
         if (isStarted) {
             stop();
@@ -123,6 +127,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             initAudioEncoder();
         }
         presentationTimeUs = new Date().getTime() * 1000;
+        try {
+            avcFos = new FileOutputStream(new File("sdcard", Constants.AVC_FILE));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         //write mp4 file.
         //https://developer.android.google.cn/reference/android/media/MediaMuxer.html
         try {
@@ -555,6 +564,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     // when got encoded h264 es stream.
     private void onEncodedh264Frame(ByteBuffer es, MediaCodec.BufferInfo bi) {
+        int oldPos = es.position();
+        byte[] arr = new byte[bi.size];
+        es.get(arr,bi.offset,bi.size);
+        es.position(oldPos);
+
+        try {
+            avcFos.write(arr);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         mediaMuxer.writeSampleData(videoTrackIndex, es, bi);
     }
 }
