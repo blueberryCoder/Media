@@ -44,6 +44,8 @@ import static android.media.MediaFormat.KEY_FRAME_RATE;
 import static android.media.MediaFormat.KEY_I_FRAME_INTERVAL;
 import static android.media.MediaFormat.KEY_MAX_INPUT_SIZE;
 
+import com.blueberry.mediacodec.utils.PixelUtils;
+
 /**
  * https://developer.android.google.cn/reference/android/media/MediaCodec.html#dequeueInputBuffer(long)
  */
@@ -162,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         aloop = true;
         mAudioRecord.startRecording();
-        audioWorkThread=new Thread(fetchAudioRunnable);
+        audioWorkThread = new Thread(fetchAudioRunnable);
         audioWorkThread.start();
         aEncoder.start();
     }
@@ -252,6 +254,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 .createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, previewSize.width, previewSize.height);
         mediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
         mediaFormat.setInteger(KEY_BIT_RATE, 300 * 1000); //比特率
+
+        PixelUtils.logColorFormatName(TAG + " Config Video Codec", colorFormat);
         mediaFormat.setInteger(KEY_COLOR_FORMAT, colorFormat);
         mediaFormat.setInteger(KEY_FRAME_RATE, 30);
         mediaFormat.setInteger(KEY_I_FRAME_INTERVAL, 5);
@@ -266,7 +270,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 mediaCodecInfo.getCapabilitiesForType(VCODEC_MIME);
         for (int i = 0; i < codecCapabilities.colorFormats.length; i++) {
             int format = codecCapabilities.colorFormats[i];
-            if (format >= codecCapabilities.COLOR_FormatYUV420Planar &&
+            if (
+                    format >= codecCapabilities.COLOR_FormatYUV420Planar
+//            format >= codecCapabilities.COLOR_FormatYUV420SemiPlanar
+                    &&
                     format <= codecCapabilities.COLOR_FormatYUV420PackedSemiPlanar) {
                 if (format >= matchedFormat) {
                     matchedFormat = format;
@@ -432,7 +439,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             if (fps[PREVIEW_FPS_MAX_INDEX] > defFps && fps[PREVIEW_FPS_MIN_INDEX] < defFps) {
                 dstRange = fps;
                 Log.d(TAG, "find fps:" + Arrays.toString(dstRange));
-
                 break;
             }
         }
@@ -475,13 +481,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     if (data != null) {
                         // data 是Nv21
                         if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar) {
+                            Log.d(TAG,"nav21 to y420sp");
                             Yuv420Util.Nv21ToYuv420SP(data, dstByte, previewSize.width, previewSize.height);
                         } else if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                            Log.d(TAG,"nav21 to i420");
+//                            System.arraycopy(data,0,dstByte,0,data.length);
                             Yuv420Util.Nv21ToI420(data, dstByte, previewSize.width, previewSize.height);
-
                         } else if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible) {
                             // Yuv420_888
-
                         } else if (colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedPlanar) {
                             // Yuv420packedPlannar 和 yuv420sp很像
                             // 区别在于 加入 width = 4的话 y1,y2,y3 ,y4公用 u1v1
@@ -566,7 +573,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private void onEncodedh264Frame(ByteBuffer es, MediaCodec.BufferInfo bi) {
         int oldPos = es.position();
         byte[] arr = new byte[bi.size];
-        es.get(arr,bi.offset,bi.size);
+        es.get(arr, bi.offset, bi.size);
         es.position(oldPos);
 
         try {
